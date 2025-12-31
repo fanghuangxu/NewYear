@@ -261,10 +261,7 @@
         // 配置目标日期
         // 注意：这里的目标是 2026年1月1日
         const targetDate = new Date("January 1, 2026 00:00:00").getTime();
-        
-        // 配置特殊的跳转时间点
-        const jumpDate = new Date("December 31, 2025 23:37:00").getTime();
-        
+
         // 跳转的目标页面
         const targetUrl = "dh.html";
 
@@ -284,8 +281,6 @@
             // 计算倒计时
             const distance = targetDate - now;
             
-            // 计算距离跳转点的时间差（用于检测是否到达触发时间）
-            const distanceToJump = jumpDate - now;
 
             // 更新倒计时显示
             if (distance < 0) {
@@ -316,9 +311,6 @@
 
             // --- 核心逻辑：检测是否到达跳转时间 ---
             // 如果当前时间 >= 跳转时间，且还没跳转过
-            if (distanceToJump <= 0) {
-                performJump();
-            }
         }
 
         // 执行跳转动作
