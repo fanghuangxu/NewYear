@@ -1,0 +1,5 @@
+action: 'title', text: '2026', size: '5rem'
+action: 'title', text: '🐎', size: '6rem'
+马年', color: '#FFD700'
+2026 马年', sub: '愿梦想如烟花般绚烂'
+我们走过的路

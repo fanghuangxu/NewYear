@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 马年跨年倒计时</title>
+    <style>
+        :root {
+            --primary-red: #D92323;
+            --deep-red: #8a0e0e;
+            --gold: #FCD34D;
+            --gold-light: #FDE68A;
+            --bg-color: #0f0f0f;
+            --text-color: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            overflow: hidden; /* 防止滚动 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* 背景动画 Canvas */
+        #fireworks-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.6;
+        }
+
+        /* 主容器 */
+        .container {
+            z-index: 10;
+            text-align: center;
+            width: 90%;
+            max-width: 800px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 3rem 2rem;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease;
+        }
+
+        /* 马年标题 */
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--gold-light);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 10px rgba(252, 211, 77, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .horse-icon {
+            font-size: 2.5rem;
+            animation: gallop 1s infinite ease-in-out;
+        }
+
+        @keyframes gallop {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        /* 副标题 */
+        .subtitle {
+            font-size: 1.2rem;
+            color: #ddd;
+            margin-bottom: 2rem;
+            font-weight: 300;
+        }
+
+        /* 倒计时网格 */
+        .countdown-wrapper {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .time-box {
+            background: linear-gradient(135deg, var(--primary-red), var(--deep-red));
+            padding: 1.5rem;
+            border-radius: 12px;
+            min-width: 100px;
+            box-shadow: 0 8px 20px rgba(217, 35, 35, 0.4);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--gold);
+        }
+
+        .time-box::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--gold);
+        }
+
+        .time-value {
+            font-size: 3rem;
+            font-weight: 700;
+            display: block;
+            font-family: 'Courier New', Courier, monospace; /* 等宽字体防止跳动 */
+        }
+
+        .time-label {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            opacity: 0.8;
+            margin-top: 5px;
+            display: block;
+        }
+
+        /* 提示信息 */
+        .info-text {
+            font-size: 0.9rem;
+            color: #888;
+            margin-top: 1rem;
+        }
+
+        /* 测试按钮 (仅在页面底部显示，用于演示) */
+        .controls {
+            margin-top: 2rem;
+        }
+        
+        .btn {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: rgba(255,255,255,0.6);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+            background: rgba(252, 211, 77, 0.1);
+        }
+
+        /* 跳转前的遮罩层动画 */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--primary-red);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: var(--gold);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1.5s ease-in;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .overlay span {
+            animation: zoomIn 1s ease-out forwards;
+        }
+
+        @keyframes zoomIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1.2); opacity: 1; }
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 600px) {
+            .time-box {
+                min-width: 70px;
+                padding: 1rem;
+            }
+            .time-value {
+                font-size: 2rem;
+            }
+            header h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 背景粒子画布 -->
+    <canvas id="fireworks-canvas"></canvas>
+
+    <!-- 主体内容 -->
+    <main class="container">
+        <header>
+            <h1><span class="horse-icon">🐎</span> 2026 马年跨年</h1>
+            <p class="subtitle">距离新年钟声还有</p>
+        </header>
+
+        <section class="countdown-wrapper" id="countdown">
+            <div class="time-box">
+                <span class="time-value" id="days">00</span>
+                <span class="time-label">天</span>
+            </div>
+            <div class="time-box">
+                <span class="time-value" id="hours">00</span>
+                <span class="time-label">时</span>
+            </div>
+            <div class="time-box">
+                <span class="time-value" id="minutes">00</span>
+                <span class="time-label">分</span>
+            </div>
+            <div class="time-box">
+                <span class="time-value" id="seconds">00</span>
+                <span class="time-label">秒</span>
+            </div>
+        </section>
+
+        <p class="info-text" id="status-text">当前时间监测中...</p>
+
+        <!-- 模拟按钮：方便你提前测试跳转效果 -->
+        <div class="controls">
+            <button class="btn" onclick="simulateJump()">模拟 23:37 跳转效果</button>
+        </div>
+    </main>
+
+    <!-- 跳转过渡动画层 -->
+    <div class="overlay" id="transition-overlay">
+        <span>🐎 马到成功！</span>
+    </div>
+
+    <script>
+        // 配置目标日期
+        // 注意：这里的目标是 2026年1月1日
+        const targetDate = new Date("January 1, 2026 00:00:00").getTime();
+        
+        // 配置特殊的跳转时间点
+        const jumpDate = new Date("December 31, 2025 23:37:00").getTime();
+        
+        // 跳转的目标页面
+        const targetUrl = "dh.html";
+
+        // DOM 元素
+        const elDays = document.getElementById('days');
+        const elHours = document.getElementById('hours');
+        const elMinutes = document.getElementById('minutes');
+        const elSeconds = document.getElementById('seconds');
+        const elStatus = document.getElementById('status-text');
+        const elOverlay = document.getElementById('transition-overlay');
+
+        let timerInterval;
+
+        function updateCountdown() {
+            const now = new Date().getTime();
+            
+            // 计算倒计时
+            const distance = targetDate - now;
+            
+            // 计算距离跳转点的时间差（用于检测是否到达触发时间）
+            const distanceToJump = jumpDate - now;
+
+            // 更新倒计时显示
+            if (distance < 0) {
+                // 如果已经过了2026年，显示全0
+                elDays.innerText = "00";
+                elHours.innerText = "00";
+                elMinutes.innerText = "00";
+                elSeconds.innerText = "00";
+                elStatus.innerText = "已进入2026马年！";
+                return;
+            }
+
+            // 时间计算
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            // 更新DOM，补零
+            elDays.innerText = days < 10 ? '0' + days : days;
+            elHours.innerText = hours < 10 ? '0' + hours : hours;
+            elMinutes.innerText = minutes < 10 ? '0' + minutes : minutes;
+            elSeconds.innerText = seconds < 10 ? '0' + seconds : seconds;
+
+            // 更新当前时间状态文本
+            const currentDateTime = new Date();
+            elStatus.innerText = `当前时刻: ${currentDateTime.toLocaleTimeString()}`;
+
+            // --- 核心逻辑：检测是否到达跳转时间 ---
+            // 如果当前时间 >= 跳转时间，且还没跳转过
+            if (distanceToJump <= 0) {
+                performJump();
+            }
+        }
+
+        // 执行跳转动作
+        function performJump() {
+            clearInterval(timerInterval); // 停止计时器
+            
+            // 显示过渡动画
+            elOverlay.classList.add('active');
+            
+            // 播放一个音效提示（可选，浏览器策略可能需要用户先交互）
+            // const audio = new Audio('path_to_sound.mp3'); audio.play().catch(e=>{});
+
+            // 延迟1.5秒后跳转，让用户看到动画
+            setTimeout(() => {
+                window.location.href = targetUrl;
+            }, 1500);
+        }
+
+        // 供按钮调用的模拟函数
+        function simulateJump() {
+            if(confirm("确定要立即模拟跳转到 dh.html 吗？")) {
+                performJump();
+            }
+        }
+
+        // 初始化
+        timerInterval = setInterval(updateCountdown, 1000);
+        updateCountdown(); // 立即执行一次避免1秒延迟
+
+        /* 
+           简单的背景粒子动画逻辑
+           增加一点跨年的氛围感
+        */
+        const canvas = document.getElementById('fireworks-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let particles = [];
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 1;
+                this.vy = (Math.random() - 0.5) * 1;
+                this.size = Math.random() * 2;
+                this.color = Math.random() > 0.5 ? '#FCD34D' : '#D92323';
+                this.alpha = Math.random();
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.alpha -= 0.005;
+
+                if (this.x < 0) this.x = width;
+                if (this.x > width) this.x = 0;
+                if (this.y < 0) this.y = height;
+                if (this.y > height) this.y = 0;
+                if (this.alpha <= 0) {
+                    this.x = Math.random() * width;
+                    this.y = Math.random() * height;
+                    this.alpha = 1;
+                }
+            }
+
+            draw() {
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            resize();
+            for(let i = 0; i < 50; i++) {
+                particles.push(new Particle());
+            }
+            animateParticles();
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateParticles);
+        }
+
+        window.addEventListener('resize', resize);
+        initParticles();
+
+    </script>
+</body>
+</html>
